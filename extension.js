@@ -579,6 +579,33 @@ class ArchUpdateIndicator extends Button {
 		}
 	}
 
+	_updateSecurityMenuExpander(enabled, label) {
+	  this.securityMenuExpander.menu.box.destroy_all_children();
+		if (label == "") {
+			// No text, hide the menuitem
+			this.securityMenuExpander.actor.visible = false;
+		} else {
+		// We make our expander look like a regular menu label if disabled
+			this.securityMenuExpander.actor.reactive = enabled;
+			this.securityMenuExpander._triangle.visible = enabled;
+			this.securityMenuExpander.label.set_text(label);
+			this.securityMenuExpander.actor.visible = true;
+			if (enabled && this._auditFullList.length > 0) {
+			  this._auditFullList.forEach( item => {
+					var menutext = item;
+					var chunks = menutext.split(" ");
+					menutext = chunks[0];
+					let hBox = new St.BoxLayout({ vertical: false });
+					hBox.add_child( this._createAuditLabel(menutext) );
+					hBox.add_child( new St.Label({
+									text: chunks[chunks.length - 2] + " risk!",
+									style_class: 'arch-updates-update-version-to' }) );
+					this.securityMenuExpander.menu.box.add_child( hBox );
+				} );
+			}
+		}
+	}
+
 	_createPackageLabel(name) {
 		if (PACKAGE_INFO_CMD) {
 			let label = new St.Label({
