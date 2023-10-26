@@ -63,7 +63,10 @@ let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 let AUDIT_INFO_CMD     = "xdg-open https://security.archlinux.org/package/%1$s";
+<<<<<<< HEAD
 let MIN_AUDIT_LEVEL    = 3;
+=======
+>>>>>>> f55cff1 (Implement audit functionality)
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
@@ -461,8 +464,12 @@ class ArchUpdateIndicator extends Button {
 	_updateAuditStatus(auditCount) {
 		auditCount = typeof auditCount === 'number' ? auditCount : -1;
 	  if (auditCount > 0) {
+<<<<<<< HEAD
 	    let level = Object.keys(AUDIT_LEVEL_MAP)[MIN_AUDIT_LEVEL]
 	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package (above %s)", "%d vulnerable packages (above %s)", auditCount ).format(auditCount, level) );
+=======
+	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package", "%d vulnerable packages", auditCount ).format(auditCount) );
+>>>>>>> f55cff1 (Implement audit functionality)
 	    AUDIT_FULL_LIST = this._auditFullList;
 	  } else if (auditCount == -1) {
 	    this._updateSecurityMenuExpander( false, '' );
@@ -549,6 +556,7 @@ class ArchUpdateIndicator extends Button {
 			  this._auditFullList.forEach( item => {
 					var menutext = item;
 					var chunks = menutext.split(" ");
+<<<<<<< HEAD
 					var level = chunks[chunks.length - 2];
 				  menutext = chunks[0];
 				  let hBox = new St.BoxLayout({ vertical: false });
@@ -557,6 +565,15 @@ class ArchUpdateIndicator extends Button {
 								  text: level,
 								  style_class: 'arch-updates-update-version-to' }) );
 				  this.securityMenuExpander.menu.box.add_child( hBox );
+=======
+					menutext = chunks[0];
+					let hBox = new St.BoxLayout({ vertical: false });
+					hBox.add_child( this._createAuditLabel(menutext) );
+					hBox.add_child( new St.Label({
+									text: chunks[chunks.length - 2] + " risk!",
+									style_class: 'arch-updates-update-version-to' }) );
+					this.securityMenuExpander.menu.box.add_child( hBox );
+>>>>>>> f55cff1 (Implement audit functionality)
 				} );
 			}
 		}
@@ -749,12 +766,16 @@ class ArchUpdateIndicator extends Button {
 	_checkAuditFullRead() {
 		// Read the buffered output
 		let auditFullList = [];
+<<<<<<< HEAD
 		let auditFilteredFullList = [];
+=======
+>>>>>>> f55cff1 (Implement audit functionality)
 		let out, size;
 		do {
 			[out, size] = this._auditFullProcess_stream.read_line_utf8(null);
 			if (out) auditFullList.push(out);
 		} while (out);
+<<<<<<< HEAD
 		for (let item of auditFullList) {
 		  var chunks = item.split(" ");
 			var level = chunks[chunks.length - 2];
@@ -763,6 +784,9 @@ class ArchUpdateIndicator extends Button {
 			}
 		}
 		this._auditFullList = auditFilteredFullList;
+=======
+		this._auditFullList = auditFullList;
+>>>>>>> f55cff1 (Implement audit functionality)
 		this._checkAuditFullEnd();
 	}
 
