@@ -448,7 +448,7 @@ class ArchUpdateIndicator extends Button {
 			} else {
 				// Up to date
 				this.updateIcon.set_gicon( this._getCustIcon('arch-uptodate-symbolic') );
-				this._updateMenuExpander( false, _('Up to date :)') );
+				this._updateMenuExpander( false, _('Up to date') );
 				UPDATES_LIST = []; // Reset stored list
 			}
 		}
