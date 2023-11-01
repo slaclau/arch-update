@@ -63,10 +63,7 @@ let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 let AUDIT_INFO_CMD     = "xdg-open https://security.archlinux.org/package/%1$s";
-<<<<<<< HEAD
 let MIN_AUDIT_LEVEL    = 3;
-=======
->>>>>>> f55cff1 (Implement audit functionality)
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
@@ -270,8 +267,15 @@ class ArchUpdateIndicator extends Button {
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
 		MIN_AUDIT_LEVEL = this._settings.get_int('min-audit-level');
+<<<<<<< HEAD
 		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
+<<<<<<< HEAD
 
+=======
+=======
+		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
+>>>>>>> 1680837 (Fixes and refinements)
+>>>>>>> 564b1c0 (Fixes and refinements)
 		this._checkShowHide();
 		this._updateStatus();
 		this._updateAuditStatus();
@@ -594,13 +598,14 @@ class ArchUpdateIndicator extends Button {
 			  this._auditFullList.forEach( item => {
 					var menutext = item;
 					var chunks = menutext.split(" ");
-					menutext = chunks[0];
-					let hBox = new St.BoxLayout({ vertical: false });
-					hBox.add_child( this._createAuditLabel(menutext) );
-					hBox.add_child( new St.Label({
-									text: chunks[chunks.length - 2] + " risk!",
-									style_class: 'arch-updates-update-version-to' }) );
-					this.securityMenuExpander.menu.box.add_child( hBox );
+					var level = chunks[chunks.length - 2];
+				  menutext = chunks[0];
+				  let hBox = new St.BoxLayout({ vertical: false });
+				  hBox.add_child( this._createAuditLabel(menutext) );
+				  hBox.add_child( new St.Label({
+								  text: level,
+								  style_class: 'arch-updates-update-version-to' }) );
+				  this.securityMenuExpander.menu.box.add_child( hBox );
 				} );
 			}
 		}
