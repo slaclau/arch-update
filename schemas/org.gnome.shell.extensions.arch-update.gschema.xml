@@ -125,5 +125,10 @@
       <description>String template, takes the package, repo and arch as attributes.</description>
     </key>
 
+    <key type="i" name="min-audit-level">
+        <default>3</default>
+        <summary>Minimum audit level to show</summary>
+    </key>
+
   </schema>
 </schemalist>

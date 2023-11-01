@@ -320,6 +320,34 @@
 	</child>
 
 </object>
+
+<object class="AdwPreferencesPage" id="page_audit">
+	<property name="title" translatable="yes">Audit settings</property>
+	<property name="icon-name">preferences-other-symbolic</property>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Audit severity</property>
+			<child>
+				<object class="AdwComboRow" id="min_audit_level">
+          <property name="title" translatable="yes">Minimal severity level to show</property>
+          <property name="model">
+
+            <object class="GtkStringList">
+              <items>
+                <item translatable="yes">Low</item>
+                <item translatable="yes">Medium</item>
+                <item translatable="yes">High</item>
+                <item translatable="yes">Critical</item>
+              </items>
+            </object>
+          </property>
+        </object>
+			</child>
+		</object>
+	</child>
+</object>
+
 <object class="AdwPreferencesPage" id="page_about">
 	<property name="title" translatable="yes">About</property>
 	<property name="icon-name">help-about-symbolic</property>
