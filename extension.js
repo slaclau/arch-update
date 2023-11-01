@@ -35,6 +35,14 @@ import {Extension, gettext as _, ngettext as __} from 'resource:///org/gnome/she
 /* I am very loose on this, may make it easier to port to other distros */
 const RE_UpdateLine = /^(.+)\s+(\S+)\s+->\s+(.+)$/;
 
+/* Constants */
+const AUDIT_LEVEL_MAP  = {
+  'Low': 0,
+  'Medium': 1,
+  'High': 2,
+  'Critical': 3,
+}
+
 /* Options */
 let ALWAYS_VISIBLE     = true;
 let USE_BUILDIN_ICONS  = true;
@@ -56,6 +64,7 @@ let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 let AUDIT_INFO_CMD     = "xdg-open https://security.archlinux.org/package/%1$s";
+let MIN_AUDIT_LEVEL    = 3;
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
@@ -259,6 +268,7 @@ class ArchUpdateIndicator extends Button {
 		STRIP_VERSIONS_N = this._settings.get_boolean('strip-versions-in-notification');
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
+		MIN_AUDIT_LEVEL = this._settings.get_int('min-audit-level');
 		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
 		this._checkShowHide();
 		this._updateStatus();
@@ -421,7 +431,7 @@ class ArchUpdateIndicator extends Button {
 			}
 			// Store the new list
 			UPDATES_LIST = this._updateList;
-			AUDIT_UPDATES_LIST = this._auditUpdatesList;
+			AUDIT_UPDATES_LIST = this._auditUpdateList;
 		} else {
 			this.label.set_text('');
 			if (updatesCount == -1) {
@@ -452,7 +462,8 @@ class ArchUpdateIndicator extends Button {
 	_updateAuditStatus(auditCount) {
 		auditCount = typeof auditCount === 'number' ? auditCount : -1;
 	  if (auditCount > 0) {
-	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package", "%d vulnerable packages", auditCount ).format(auditCount) );
+	    let level = Object.keys(AUDIT_LEVEL_MAP)[MIN_AUDIT_LEVEL]
+	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package (above %s)", "%d vulnerable packages (above %s)", auditCount ).format(auditCount, level) );
 	    AUDIT_FULL_LIST = this._auditFullList;
 	  } else if (auditCount == -1) {
 	    this._updateSecurityMenuExpander( false, '' );
@@ -528,13 +539,14 @@ class ArchUpdateIndicator extends Button {
 			  this._auditFullList.forEach( item => {
 					var menutext = item;
 					var chunks = menutext.split(" ");
-					menutext = chunks[0];
-					let hBox = new St.BoxLayout({ vertical: false });
-					hBox.add_child( this._createAuditLabel(menutext) );
-					hBox.add_child( new St.Label({
-									text: chunks[chunks.length - 2] + " risk!",
-									style_class: 'arch-updates-update-version-to' }) );
-					this.securityMenuExpander.menu.box.add_child( hBox );
+					var level = chunks[chunks.length - 2];
+				  menutext = chunks[0];
+				  let hBox = new St.BoxLayout({ vertical: false });
+				  hBox.add_child( this._createAuditLabel(menutext) );
+				  hBox.add_child( new St.Label({
+								  text: level,
+								  style_class: 'arch-updates-update-version-to' }) );
+				  this.securityMenuExpander.menu.box.add_child( hBox );
 				} );
 			}
 		}
@@ -725,12 +737,20 @@ class ArchUpdateIndicator extends Button {
 	_checkAuditFullRead() {
 		// Read the buffered output
 		let auditFullList = [];
+		let auditFilteredFullList = [];
 		let out, size;
 		do {
 			[out, size] = this._auditFullProcess_stream.read_line_utf8(null);
 			if (out) auditFullList.push(out);
 		} while (out);
-		this._auditFullList = auditFullList;
+		for (let item of auditFullList) {
+		  var chunks = item.split(" ");
+			var level = chunks[chunks.length - 2];
+			if (AUDIT_LEVEL_MAP[level] >= MIN_AUDIT_LEVEL) {
+			  auditFilteredFullList.push(item);
+			}
+		}
+		this._auditFullList = auditFilteredFullList;
 		this._checkAuditFullEnd();
 	}
 
@@ -801,4 +821,5 @@ class ArchUpdateIndicator extends Button {
 	}
 
 });
+
 
