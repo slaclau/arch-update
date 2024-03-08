@@ -269,7 +269,8 @@ class ArchUpdateIndicator extends Button {
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
 		MIN_AUDIT_LEVEL = this._settings.get_int('min-audit-level');
-		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
+		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
+
 		this._checkShowHide();
 		this._updateStatus();
 		this._updateAuditStatus();
@@ -379,11 +380,11 @@ class ArchUpdateIndicator extends Button {
 	_showChecking(isChecking) {
 		if (isChecking == true) {
 			this.updateIcon.set_gicon( this._getCustIcon('arch-unknown-symbolic') );
-			this.checkNowMenuContainer.actor.visible = false;
-			this.checkingMenuItem.actor.visible = true;;
+			this.checkNowMenuItem.visible = false;
+			this.checkingMenuItem.visible = true;
 		} else {
-			this.checkNowMenuContainer.actor.visible = true;;
-			this.checkingMenuItem.actor.visible = false;;
+			this.checkNowMenuItem.visible = true;
+			this.checkingMenuItem.visible = false;
 		}
 	}
 
