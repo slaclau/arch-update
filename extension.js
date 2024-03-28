@@ -267,15 +267,7 @@ class ArchUpdateIndicator extends Button {
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
 		MIN_AUDIT_LEVEL = this._settings.get_int('min-audit-level');
-<<<<<<< HEAD
 		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
-<<<<<<< HEAD
-
-=======
-=======
-		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
->>>>>>> 1680837 (Fixes and refinements)
->>>>>>> 564b1c0 (Fixes and refinements)
 		this._checkShowHide();
 		this._updateStatus();
 		this._updateAuditStatus();
@@ -468,12 +460,8 @@ class ArchUpdateIndicator extends Button {
 	_updateAuditStatus(auditCount) {
 		auditCount = typeof auditCount === 'number' ? auditCount : -1;
 	  if (auditCount > 0) {
-<<<<<<< HEAD
 	    let level = Object.keys(AUDIT_LEVEL_MAP)[MIN_AUDIT_LEVEL]
 	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package (above %s)", "%d vulnerable packages (above %s)", auditCount ).format(auditCount, level) );
-=======
-	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package", "%d vulnerable packages", auditCount ).format(auditCount) );
->>>>>>> f55cff1 (Implement audit functionality)
 	    AUDIT_FULL_LIST = this._auditFullList;
 	  } else if (auditCount == -1) {
 	    this._updateSecurityMenuExpander( false, '' );
@@ -506,7 +494,7 @@ class ArchUpdateIndicator extends Button {
 							// Not an update
 							this.menuExpander.menu.box.add( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
 						} else {
-							let hBox = new St.BoxLayout({ vertical: false });
+							let hBox = new St.BoxLayout({ vertical: false, x_expand: true });
     						let __label = this._createPackageLabel(matches[1]);
 							if (this._auditUpdateList.includes(matches[1])) {
 							  hBox.add_child(new St.Icon({gicon: Gio.icon_new_for_string('warning-symbolic'), icon_size: 12}));
@@ -560,47 +548,9 @@ class ArchUpdateIndicator extends Button {
 			  this._auditFullList.forEach( item => {
 					var menutext = item;
 					var chunks = menutext.split(" ");
-<<<<<<< HEAD
 					var level = chunks[chunks.length - 2];
 				  menutext = chunks[0];
-				  let hBox = new St.BoxLayout({ vertical: false });
-				  hBox.add_child( this._createAuditLabel(menutext) );
-				  hBox.add_child( new St.Label({
-								  text: level,
-								  style_class: 'arch-updates-update-version-to' }) );
-				  this.securityMenuExpander.menu.box.add_child( hBox );
-=======
-					menutext = chunks[0];
-					let hBox = new St.BoxLayout({ vertical: false });
-					hBox.add_child( this._createAuditLabel(menutext) );
-					hBox.add_child( new St.Label({
-									text: chunks[chunks.length - 2] + " risk!",
-									style_class: 'arch-updates-update-version-to' }) );
-					this.securityMenuExpander.menu.box.add_child( hBox );
->>>>>>> f55cff1 (Implement audit functionality)
-				} );
-			}
-		}
-	}
-
-	_updateSecurityMenuExpander(enabled, label) {
-	  this.securityMenuExpander.menu.box.destroy_all_children();
-		if (label == "") {
-			// No text, hide the menuitem
-			this.securityMenuExpander.actor.visible = false;
-		} else {
-		// We make our expander look like a regular menu label if disabled
-			this.securityMenuExpander.actor.reactive = enabled;
-			this.securityMenuExpander._triangle.visible = enabled;
-			this.securityMenuExpander.label.set_text(label);
-			this.securityMenuExpander.actor.visible = true;
-			if (enabled && this._auditFullList.length > 0) {
-			  this._auditFullList.forEach( item => {
-					var menutext = item;
-					var chunks = menutext.split(" ");
-					var level = chunks[chunks.length - 2];
-				  menutext = chunks[0];
-				  let hBox = new St.BoxLayout({ vertical: false });
+				  let hBox = new St.BoxLayout({ vertical: false, x_expand: true });
 				  hBox.add_child( this._createAuditLabel(menutext) );
 				  hBox.add_child( new St.Label({
 								  text: level,
@@ -637,6 +587,7 @@ class ArchUpdateIndicator extends Button {
 		if (AUDIT_INFO_CMD) {
 			let label = new St.Label({
 				text: name,
+				x_expand: true,
 				style_class: 'arch-updates-update-name-link'
 			});
 			let button = new St.Button({
@@ -798,16 +749,12 @@ class ArchUpdateIndicator extends Button {
 	_checkAuditFullRead() {
 		// Read the buffered output
 		let auditFullList = [];
-<<<<<<< HEAD
 		let auditFilteredFullList = [];
-=======
->>>>>>> f55cff1 (Implement audit functionality)
 		let out, size;
 		do {
 			[out, size] = this._auditFullProcess_stream.read_line_utf8(null);
 			if (out) auditFullList.push(out);
 		} while (out);
-<<<<<<< HEAD
 		for (let item of auditFullList) {
 		  var chunks = item.split(" ");
 			var level = chunks[chunks.length - 2];
@@ -816,9 +763,6 @@ class ArchUpdateIndicator extends Button {
 			}
 		}
 		this._auditFullList = auditFilteredFullList;
-=======
-		this._auditFullList = auditFullList;
->>>>>>> f55cff1 (Implement audit functionality)
 		this._checkAuditFullEnd();
 	}
 
