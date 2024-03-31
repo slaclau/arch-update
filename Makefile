@@ -4,8 +4,8 @@ UUID = arch-update-security-news@slaclau.github.io
 BASE_MODULES = extension.js metadata.json LICENCE.txt README.md
 EXTRA_MODULES = prefs.js
 TOLOCALIZE =  extension.js prefs.js
-PO_FILES := $(wildcard ./locale/*/*/*.po)
-MO_FILES := $(PO_FILES:.po=.mo)
+PO_FILES := $(wildcard locale/*/*.po)
+MO_FILES := $(PO_FILES:locale/%/arch-update.po=locale/%/LC_MESSAGES/arch-update.mo)
 
 ifeq ($(strip $(DESTDIR)),)
 	INSTALLTYPE = local
@@ -22,7 +22,7 @@ all: extension
 clean:
 	rm -f ./schemas/gschemas.compiled
 	rm -f ./**/*~
-	rm -f ./locale/*/*/*.mo
+	rm -f ./locale/*/LC_MESSAGES/*.mo
 	rm -f ./locale/arch-update.pot
 
 extension: ./schemas/gschemas.compiled $(MO_FILES)
@@ -41,8 +41,9 @@ mergepo: potfile
 	mkdir -p locale
 	xgettext -k --keyword=__ --keyword=N__ --add-comments='Translators:' -o locale/arch-update.pot --package-name "Arch Update Security News" $(TOLOCALIZE)
 
-%.mo: %.po
-	msgfmt -c $< -o $@
+./locale/%/LC_MESSAGES/arch-update.mo: ./locale/%/arch-update.po
+	mkdir $(dir $@)
+	msgfmt $< -o $@
 
 install: install-local
 
@@ -69,7 +70,7 @@ zip-file: _build
 _build: all
 	-rm -fR ./_build
 	mkdir -p _build
-	cp -r $(BASE_MODULES) $(EXTRA_MODULES) $(CUSTOM_REBOOT_MODULES) _build
+	cp -r $(BASE_MODULES) $(EXTRA_MODULES) _build
 	mkdir -p _build/schemas
 	cp schemas/*.xml _build/schemas/
 	cp schemas/gschemas.compiled _build/schemas/

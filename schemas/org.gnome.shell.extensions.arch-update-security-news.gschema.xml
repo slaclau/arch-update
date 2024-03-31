@@ -1,6 +1,6 @@
 <schemalist gettext-domain="gnome-shell-extensions">
-  <schema id="org.gnome.shell.extensions.arch-update"
-      path="/org/gnome/shell/extensions/arch-update/">
+  <schema id="org.gnome.shell.extensions.arch-update-security-news"
+      path="/org/gnome/shell/extensions/arch-update-security-news/">
 
     <key type="i" name="boot-wait">
         <default>15</default>
