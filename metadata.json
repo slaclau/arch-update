@@ -2,8 +2,8 @@
   "description": "Update indicator for Arch Linux and GNOME Shell.\n** Note : you now need to install the package pacman-contrib to use the checkupdates script and arch-audit for security functionality. **\n  Can support AUR or other distros by changing command used to check for and apply updates.\n See README about Gnome Console",
   "name": "Arch Linux Updates and Security Indicator",
   "shell-version": [ "46" ],
-  "url": "https://github.com/slaclau/arch-update", 
+  "url": "https://github.com/slaclau/arch-update-security-news", 
   "uuid": "arch-update@slaclau.github.io", 
   "gettext-domain": "arch-update",
-  "settings-schema": "org.gnome.shell.extensions.arch-update",
+  "settings-schema": "org.gnome.shell.extensions.arch-update-security-news",
 }
