@@ -2,7 +2,8 @@
 
 UUID = arch-update-security-news@slaclau.github.io
 BASE_MODULES = extension.js metadata.json LICENCE.txt README.md
-EXTRA_MODULES = prefs.js
+EXTRA_MODULES = prefs.js prefs.xml
+ICONS = icons
 TOLOCALIZE =  extension.js prefs.js
 PO_FILES := $(wildcard locale/*/*.po)
 MO_FILES := $(PO_FILES:locale/%/arch-update.po=locale/%/LC_MESSAGES/arch-update.mo)
@@ -22,7 +23,7 @@ all: extension
 clean:
 	rm -f ./schemas/gschemas.compiled
 	rm -f ./**/*~
-	rm -f ./locale/*/LC_MESSAGES/*.mo
+	rm -rf ./locale/*/LC_MESSAGES
 	rm -f ./locale/arch-update.pot
 
 extension: ./schemas/gschemas.compiled $(MO_FILES)
@@ -70,7 +71,7 @@ zip-file: _build
 _build: all
 	-rm -fR ./_build
 	mkdir -p _build
-	cp -r $(BASE_MODULES) $(EXTRA_MODULES) _build
+	cp -r $(BASE_MODULES) $(EXTRA_MODULES) $(ICONS) _build
 	mkdir -p _build/schemas
 	cp schemas/*.xml _build/schemas/
 	cp schemas/gschemas.compiled _build/schemas/
