@@ -56,6 +56,7 @@ let UPDATE_CMD         = "gnome-terminal -- /bin/sh -c \"sudo pacman -Syu ; echo
 let CHECK_CMD          = "/usr/bin/checkupdates";
 let AUDIT_CMD          = "/usr/bin/arch-audit -u";
 let AUDIT_FULL_CMD     = "/usr/bin/arch-audit";
+let NEWS_CMD           = `/usr/bin/informant list`
 let MANAGER_CMD        = "";
 let PACMAN_DIR         = "/var/lib/pacman/local";
 let STRIP_VERSIONS     = false;
@@ -64,6 +65,7 @@ let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 let AUDIT_INFO_CMD     = "xdg-open https://security.archlinux.org/package/%1$s";
+let NEWS_READ_CMD      = `/usr/bin/informant read`
 let MIN_AUDIT_LEVEL    = 3;
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
@@ -72,6 +74,7 @@ let UPDATES_PENDING    = -1;
 let UPDATES_LIST       = [];
 let AUDIT_UPDATES_LIST = [];
 let AUDIT_FULL_LIST    = [];
+let NEWS_LIST          = [];
 
 export default class ArchUpdateIndicatorExtension extends Extension {
 	constructor(metadata) {
@@ -136,6 +139,8 @@ class ArchUpdateIndicator extends Button {
 		this.menuExpander = new PopupMenu.PopupSubMenuMenuItem('Updates');
 		this.menuExpander.menu.box.style_class = 'arch-updates-list';
 		this.securityMenuExpander = new PopupMenu.PopupSubMenuMenuItem('Security alerts');
+		this.newsExpander = new PopupMenu.PopupSubMenuMenuItem('News');
+
 
 		// Other standard menu items
 		let settingsMenuItem = new PopupMenu.PopupMenuItem(_('Settings'));
@@ -162,6 +167,7 @@ class ArchUpdateIndicator extends Button {
 		// Assemble all menu items into the popup menu
 		this.menu.addMenuItem(this.menuExpander);
 		this.menu.addMenuItem(this.securityMenuExpander);
+		this.menu.addMenuItem(this.newsExpander)
 		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 		this.menu.addMenuItem(this.updateNowMenuItem);
 		this.menu.addMenuItem(this.checkingMenuItem);
@@ -174,9 +180,11 @@ class ArchUpdateIndicator extends Button {
 		this.checkNowMenuItem.connect('activate', this._checkUpdates.bind(this));
 		this.checkNowMenuItem.connect('activate', this._checkAuditUpdates.bind(this));
 		this.checkNowMenuItem.connect('activate', this._checkAuditFull.bind(this));
+		this.checkNowMenuItem.connect('activate', this._checkNews.bind(this));
 		cancelButton.connect('clicked', this._cancelCheck.bind(this));
 		cancelButton.connect('clicked', this._cancelAuditCheck.bind(this));
 		cancelButton.connect('clicked', this._cancelAuditFullCheck.bind(this));
+		cancelButton.connect('clicked', this._cancelNewsCheck.bind(this));
 		settingsMenuItem.connect('activate', this._openSettings.bind(this));
 		this.updateNowMenuItem.connect('activate', this._updateNow.bind(this));
 		this.managerMenuItem.connect('activate', this._openManager.bind(this));
@@ -185,6 +193,7 @@ class ArchUpdateIndicator extends Button {
 		this._showChecking(false);
 		this._updateMenuExpander(false, _('Waiting first check'));
 		this._updateSecurityMenuExpander(false, _('Waiting first audit'));
+
 
 		// Restore previous updates list if any
 		this._updateList = UPDATES_LIST;
@@ -207,6 +216,7 @@ class ArchUpdateIndicator extends Button {
 				that._checkUpdates();
 				that._checkAuditUpdates();
 				that._checkAuditFull();
+				that._checkNews();
 				that._FirstTimeoutId = null;
 				FIRST_BOOT = 0;
 				return false; // Run once
@@ -275,6 +285,7 @@ class ArchUpdateIndicator extends Button {
 		this._checkShowHide();
 		this._updateStatus();
 		this._updateAuditStatus();
+		this._updateNewsStatus();
 		this._startFolderMonitor();
 		let that = this;
 		if (this._TimeoutId) GLib.source_remove(this._TimeoutId);
@@ -282,6 +293,7 @@ class ArchUpdateIndicator extends Button {
 			that._checkUpdates();
 			that._checkAuditUpdates();
 			that._checkAuditFull();
+			that._checkNews();
 			return true;
 		});
 	}
@@ -457,6 +469,7 @@ class ArchUpdateIndicator extends Button {
 				UPDATES_LIST = []; // Reset stored list
 			}
 		}
+
 		UPDATES_PENDING = updatesCount;
 		this._checkAutoExpandList();
 		this._checkShowHide();
@@ -470,6 +483,16 @@ class ArchUpdateIndicator extends Button {
 	    AUDIT_FULL_LIST = this._auditFullList;
 	  } else if (auditCount == -1) {
 	    this._updateSecurityMenuExpander( false, _('Waiting first audit') );
+	  }
+	}
+
+	_updateNewsStatus(newsCount) {
+		newsCount = typeof newsCount === 'number' ? newsCount : -1;
+	  if (newsCount > 0) {
+	    this._updateNewsExpander( true, __( "%d recent news item", "%d recent news items", newsCount ).format(newsCount) );
+	    NEWS_LIST = this._newsList;
+	  } else if (newsCount == -1) {
+	    this._updateNewsExpander( false, _('Waiting first news') );
 	  }
 	}
 
@@ -569,6 +592,30 @@ class ArchUpdateIndicator extends Button {
 		}
 	}
 
+	_updateNewsExpander(enabled, label) {
+	  this.newsExpander.menu.box.destroy_all_children();
+		if (label == "") {
+			// No text, hide the menuitem
+			this.newsExpander.actor.visible = false;
+		} else {
+		// We make our expander look like a regular menu label if disabled
+			this.newsExpander.actor.reactive = enabled;
+			this.newsExpander._triangle.visible = enabled;
+			this.newsExpander.label.set_text(label);
+			this.newsExpander.actor.visible = true;
+			if (enabled && this._newsList.length > 0) {
+			  this._newsList.forEach( item => {
+					var menutext = item;
+				  let hBox = new St.BoxLayout({ vertical: false, x_expand: true });
+				  let __label = this._createNewsLabel(menutext)
+				  __label.style = 'padding-left: 12px';
+				  hBox.add_child(__label );
+				  this.newsExpander.menu.box.add_child( hBox );
+				} );
+			}
+		}
+	}
+
 	_createPackageLabel(name) {
 		if (PACKAGE_INFO_CMD) {
 			let label = new St.Label({
@@ -613,6 +660,28 @@ class ArchUpdateIndicator extends Button {
 		}
 	}
 
+		_createNewsLabel(name) {
+		if (NEWS_READ_CMD) {
+			let label = new St.Label({
+				text: name,
+				x_expand: true,
+				style_class: 'arch-updates-update-name-link'
+			});
+			let button = new St.Button({
+				child: label,
+				x_expand: true
+			});
+			button.connect('clicked', this._newsRead.bind(this, name));
+			return button;
+		} else {
+			return new St.Label({
+				text: name,
+				x_expand: true,
+				style_class: 'arch-updates-update-name'
+			});
+		}
+	}
+
 	_packageInfo(item) {
 		this.menu.close();
 		let proc = this.launcher.spawnv(['pacman', '-Si', item]);
@@ -635,6 +704,12 @@ class ArchUpdateIndicator extends Button {
 	_auditInfo(item) {
     let command = AUDIT_INFO_CMD.format(item);
 		Util.spawnCommandLine(command);
+	}
+
+	_newsRead(item) {
+	  let command = NEWS_READ_CMD + " " + this._newsList.indexOf(item)
+	  command = command.replace('~', GLib.get_home_dir())
+	  Util.spawnCommandLine(command);
 	}
 
 	_checkUpdates() {
@@ -712,6 +787,30 @@ class ArchUpdateIndicator extends Button {
 		}
 	}
 
+	_checkNews() {
+	  console.log('Checking for news')
+		if(this._newsProcess_sourceId) {
+			// A check is already running ! Maybe we should kill it and run another one ?
+			return;
+		}
+		// Run asynchronously, to avoid  shell freeze - even for a 1s check
+		try {
+			// Parse check command line
+			let [parseok, argvp] = GLib.shell_parse_argv( NEWS_CMD.replace('~', GLib.get_home_dir()) );
+			if (!parseok) { throw 'Parse error' };
+			let [res, pid, in_fd, out_fd, err_fd]  = GLib.spawn_async_with_pipes(null, argvp, null, GLib.SpawnFlags.DO_NOT_REAP_CHILD, null);
+			// Let's buffer the command's output - that's a input for us !
+			this._newsProcess_stream = new Gio.DataInputStream({
+				base_stream: new Gio.UnixInputStream({fd: out_fd})
+			});
+			// We will process the output at once when it's done
+			this._newsProcess_sourceId = GLib.child_watch_add(0, pid, () => {this._checkNewsRead()} );
+			this._newsProcess_pid = pid;
+		} catch (err) {
+			this.lastNewsErrorString = err.message.toString();
+		}
+	}
+
 	_cancelCheck() {
 		if (this._updateProcess_pid == null) { return; };
 		Util.spawnCommandLine( "kill " + this._updateProcess_pid );
@@ -731,6 +830,13 @@ class ArchUpdateIndicator extends Button {
 		Util.spawnCommandLine( "kill " + this._auditFullProcess_pid );
 		this._auditFullProcess_pid = null; // Prevent double kill
 		this._checkAuditFullEnd();
+	}
+
+	_cancelNewsCheck() {
+		if (this._newsProcess_pid == null) { return; };
+		Util.spawnCommandLine( "kill " + this._newsProcess_pid );
+		this._newsProcess_pid = null; // Prevent double kill
+		this._checkNewsEnd();
 	}
 
 	_checkUpdatesRead() {
@@ -777,6 +883,26 @@ class ArchUpdateIndicator extends Button {
 		this._checkAuditFullEnd();
 	}
 
+	_checkNewsRead() {
+		// Read the buffered output
+		let newsList = [];
+		let out, size;
+		let regex = /([a-zA-z]{3}[,][ ][\d]{2}[ ][a-zA-Z]{3}[ ][\d]{4}[ ]([\d]{2}[:]){2}[\d]{2}[ ][+][\d]{4})/i
+		do {
+			[out, size] = this._newsProcess_stream.read_line_utf8(null);
+			if (out) {
+			  console.log(out)
+			  out = out.replace(/\u001b\[.*?m/g, '');
+			  out = out.replace(regex, '')
+			    .replace(/\s+/g,' ')
+			    .substr(out.indexOf(' ') + 1);
+			  newsList.push(out);
+			}
+		} while (out);
+		this._newsList = newsList;
+		this._checkNewsEnd();
+	}
+
 	checkShowChecking() {
 	  if (
 	    this._updateProcess_stream === null &&
@@ -793,6 +919,8 @@ class ArchUpdateIndicator extends Button {
 	    this._showChecking(true)
 	  }
 	}
+
+
 	_checkUpdatesEnd() {
 		// Free resources
 		this._updateProcess_stream.close(null);
@@ -824,6 +952,15 @@ class ArchUpdateIndicator extends Button {
 		this._updateAuditStatus(this._auditFullList.length);
 	}
 
+	_checkNewsEnd() {
+		// Free resources
+		this._newsProcess_stream.close(null);
+		this._newsProcess_stream = null;
+		GLib.source_remove(this._newsProcess_sourceId);
+		this._newsProcess_sourceId = null;
+		this._newsProcess_pid = null;
+		this.checkShowChecking();
+		this._updateNewsStatus(this._newsList.length);
 	}
 
 	_showNotification(title, message) {
