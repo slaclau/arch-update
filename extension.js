@@ -133,9 +133,9 @@ class ArchUpdateIndicator extends Button {
 
 		// Prepare the special menu : a submenu for updates list that will look like a regular menu item when disabled
 		// Scrollability will also be taken care of by the popupmenu
-		this.menuExpander = new PopupMenu.PopupSubMenuMenuItem('');
+		this.menuExpander = new PopupMenu.PopupSubMenuMenuItem('Updates');
 		this.menuExpander.menu.box.style_class = 'arch-updates-list';
-		this.securityMenuExpander = new PopupMenu.PopupSubMenuMenuItem('');
+		this.securityMenuExpander = new PopupMenu.PopupSubMenuMenuItem('Security alerts');
 
 		// Other standard menu items
 		let settingsMenuItem = new PopupMenu.PopupMenuItem(_('Settings'));
@@ -146,7 +146,7 @@ class ArchUpdateIndicator extends Button {
 		this.checkingMenuItem = new PopupMenu.PopupBaseMenuItem( {reactive:false} );
 		let checkingLabel = new St.Label({ text: _('Checking') + " …" });
 		let cancelButton = new St.Button({
-			child: new St.Icon({ icon_name: 'process-stop-symbolic' }),
+			child: new St.Icon({ icon_name: 'process-stop-symbolic' , icon_size: 16}),
 			style_class: 'system-menu-action arch-updates-menubutton',
 			x_expand: true
 		});
@@ -201,7 +201,9 @@ class ArchUpdateIndicator extends Button {
 			// Schedule first check only if this is the first extension load
 			// This won't be run again if extension is disabled/enabled (like when screen is locked)
 			let that = this;
+			console.log(`Running first boot check in ${BOOT_WAIT} seconds`)
 			this._FirstTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, BOOT_WAIT, function () {
+				console.log('Running first boot check now')
 				that._checkUpdates();
 				that._checkAuditUpdates();
 				that._checkAuditFull();
@@ -251,6 +253,7 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_applySettings() {
+	  console.log('Applying settings')
 		ALWAYS_VISIBLE = this._settings.get_boolean('always-visible');
 		USE_BUILDIN_ICONS = this._settings.get_boolean('use-buildin-icons');
 		SHOW_COUNT = this._settings.get_boolean('show-count');
@@ -278,6 +281,7 @@ class ArchUpdateIndicator extends Button {
 		this._TimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, CHECK_INTERVAL, function () {
 			that._checkUpdates();
 			that._checkAuditUpdates();
+			that._checkAuditFull();
 			return true;
 		});
 	}
@@ -436,7 +440,7 @@ class ArchUpdateIndicator extends Button {
 			if (updatesCount == -1) {
 				// Unknown
 				this.updateIcon.set_gicon( this._getCustIcon('arch-unknown-symbolic') );
-				this._updateMenuExpander( false, '' );
+				this._updateMenuExpander( false, _('Waiting first check') );
 			} else if (updatesCount == -2) {
 				// Error
 				this.updateIcon.set_gicon( this._getCustIcon('arch-error-symbolic') );
@@ -465,7 +469,7 @@ class ArchUpdateIndicator extends Button {
 	    this._updateSecurityMenuExpander( true, __( "%d vulnerable package (above %s)", "%d vulnerable packages (above %s)", auditCount ).format(auditCount, level) );
 	    AUDIT_FULL_LIST = this._auditFullList;
 	  } else if (auditCount == -1) {
-	    this._updateSecurityMenuExpander( false, '' );
+	    this._updateSecurityMenuExpander( false, _('Waiting first audit') );
 	  }
 	}
 
@@ -552,10 +556,13 @@ class ArchUpdateIndicator extends Button {
 					var level = chunks[chunks.length - 2];
 				  menutext = chunks[0];
 				  let hBox = new St.BoxLayout({ vertical: false, x_expand: true });
-				  hBox.add_child( this._createAuditLabel(menutext) );
+				  let __label = this._createAuditLabel(menutext)
+				  __label.style = 'padding-left: 12px';
+				  hBox.add_child(__label );
 				  hBox.add_child( new St.Label({
 								  text: level,
-								  style_class: 'arch-updates-update-version-to' }) );
+								  style_class: 'arch-updates-update-version-to'
+					}) );
 				  this.securityMenuExpander.menu.box.add_child( hBox );
 				} );
 			}
@@ -631,6 +638,7 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_checkUpdates() {
+	  console.log('Checking for updates')
 		if(this._updateProcess_sourceId) {
 			// A check is already running ! Maybe we should kill it and run another one ?
 			return;
@@ -657,6 +665,7 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_checkAuditUpdates() {
+	  console.log('Checking for security alerts')
 		if(this._auditUpdateProcess_sourceId) {
 			// A check is already running ! Maybe we should kill it and run another one ?
 			return;
@@ -680,6 +689,7 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_checkAuditFull() {
+  	console.log('Checking for all security alerts')
 		if(this._auditFullProcess_sourceId) {
 			// A check is already running ! Maybe we should kill it and run another one ?
 			return;
@@ -767,6 +777,22 @@ class ArchUpdateIndicator extends Button {
 		this._checkAuditFullEnd();
 	}
 
+	checkShowChecking() {
+	  if (
+	    this._updateProcess_stream === null &&
+	    this._auditFullProcess_stream === null &&
+	    this._auditUpdateProcess_stream === null
+	  ) {
+	    this._showChecking(false)
+	    if (DISABLE_PARSING) {
+			  this._updateStatus(this._updateList.length);
+		  } else {
+			  this._updateStatus(this._updateList.filter(function(line) { return RE_UpdateLine.test(line) }).length);
+		  }
+	  } else {
+	    this._showChecking(true)
+	  }
+	}
 	_checkUpdatesEnd() {
 		// Free resources
 		this._updateProcess_stream.close(null);
@@ -774,9 +800,7 @@ class ArchUpdateIndicator extends Button {
 		GLib.source_remove(this._updateProcess_sourceId);
 		this._updateProcess_sourceId = null;
 		this._updateProcess_pid = null;
-		// Update indicator
-		this._showChecking(false);
-		this._end();
+		this.checkShowChecking();
 	}
 
 	_checkAuditUpdatesEnd() {
@@ -786,7 +810,7 @@ class ArchUpdateIndicator extends Button {
 		GLib.source_remove(this._auditUpdateProcess_sourceId);
 		this._auditUpdateProcess_sourceId = null;
 		this._auditUpdateProcess_pid = null;
-		this._end();
+		this.checkShowChecking();
 	}
 
 	_checkAuditFullEnd() {
@@ -796,15 +820,10 @@ class ArchUpdateIndicator extends Button {
 		GLib.source_remove(this._auditFullProcess_sourceId);
 		this._auditFullProcess_sourceId = null;
 		this._auditFullProcess_pid = null;
+		this.checkShowChecking();
 		this._updateAuditStatus(this._auditFullList.length);
 	}
 
-	_end() {
-	  if (DISABLE_PARSING) {
-			this._updateStatus(this._updateList.length);
-		} else {
-			this._updateStatus(this._updateList.filter(function(line) { return RE_UpdateLine.test(line) }).length);
-		}
 	}
 
 	_showNotification(title, message) {
