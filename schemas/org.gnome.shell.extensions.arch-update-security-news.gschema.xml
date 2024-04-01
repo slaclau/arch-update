@@ -18,7 +18,7 @@
 
     <key name="always-visible" type="b">
       <default>true</default>
-        <summary>Indicator is always visble</summary>
+        <summary>Indicator is always visible</summary>
         <description>
             If true, the indicator is always visible, even when non updates are pending
         </description>
