@@ -101,6 +101,7 @@ const ArchUpdateIndicator = GObject.registerClass(
     {
         _TimeoutId: null,
         _FirstTimeoutId: null,
+        _FolderChangedId: null,
         _updateProcess_sourceId: null,
         _updateProcess_stream: null,
         _updateProcess_pid: null,
@@ -377,6 +378,10 @@ const ArchUpdateIndicator = GObject.registerClass(
                 GLib.source_remove(this._FirstTimeoutId);
                 this._FirstTimeoutId = null;
             }
+            if (this._FolderChangedId) {
+                GLib.source_remove(this._FolderChangedId);
+                this._FolderChangedId = null;
+            }
             if (this._TimeoutId) {
                 GLib.source_remove(this._TimeoutId);
                 this._TimeoutId = null;
@@ -439,15 +444,15 @@ const ArchUpdateIndicator = GObject.registerClass(
         _onFolderChanged() {
             // Folder have changed ! Let's schedule a check in a few seconds
             let that = this;
-            if (this._FirstTimeoutId) GLib.source_remove(this._FirstTimeoutId);
-            this._FirstTimeoutId = GLib.timeout_add_seconds(
+            if (this._FolderChangedId) GLib.source_remove(this._FolderChangedId);
+            this._FolderChangedId = GLib.timeout_add_seconds(
                 GLib.PRIORITY_DEFAULT,
                 5,
                 function () {
                     that._checkUpdates();
                     that._checkAuditUpdates();
                     that._checkAuditFull();
-                    that._FirstTimeoutId = null;
+                    that._FolderChangedId = null;
                     return false;
                 }
             );
