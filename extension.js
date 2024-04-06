@@ -444,7 +444,8 @@ const ArchUpdateIndicator = GObject.registerClass(
         _onFolderChanged() {
             // Folder have changed ! Let's schedule a check in a few seconds
             let that = this;
-            if (this._FolderChangedId) GLib.source_remove(this._FolderChangedId);
+            if (this._FolderChangedId)
+                GLib.source_remove(this._FolderChangedId);
             this._FolderChangedId = GLib.timeout_add_seconds(
                 GLib.PRIORITY_DEFAULT,
                 5,
