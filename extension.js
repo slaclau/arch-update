@@ -77,9 +77,6 @@ export default class ArchUpdateIndicatorExtension extends Extension {
 	constructor(metadata) {
 		super(metadata);
 	}
-	init() {
-		String.prototype.format = Format.format;
-	}
 	enable() {
 		this.archupdateindicator = new ArchUpdateIndicator(this);
 		Main.panel.addToStatusArea('ArchUpdateIndicator', this.archupdateindicator);
